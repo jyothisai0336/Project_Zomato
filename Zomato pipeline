@@ -1,0 +1,69 @@
+pipeline {
+    agent{
+        node{
+            label 'zomato'
+        }
+    }
+    tools{
+        nodejs 'nodejs'
+    }
+    environment{
+        SCANNER_HOME= tool 'sonar'
+    }
+    stages {
+        stage('cleanws') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Code'){
+            steps{
+                git'https://github.com/jyothisai0336/Project_Zomato.git'
+            }
+        }
+        stage('CQA'){
+            steps{
+                withSonarQubeEnv('sonar') {
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner \
+                            -Dsonar.projectName=zomato \
+                            -Dsonar.projectKey=zomato '''
+                }
+            }
+        }
+        stage('Quality Gates'){
+            steps{
+                waitForQualityGate abortPipeline: false, credentialsId: 'sonar'
+            }
+        }
+        stage('Build'){
+            steps{
+                sh'npm install'
+                sh'npm run build'
+            }
+        }
+        stage('Image'){
+            steps{
+                sh'docker build -t jyothisai33/zomato .'
+            }
+        }
+        stage ('Image Scan'){
+            steps{
+                sh'trivy image jyothisai33/zomato'
+            }
+        }
+        stage ('Push'){
+            steps{
+              script{
+                  withDockerRegistry(credentialsId: 'Dockerhub') {
+                    sh 'docker push jyothisai33/zomato'
+                }
+              }
+            }
+        }
+        stage('Deploy'){
+            steps{
+                    sh '''docker stack deploy -c docker-stack.yml zomato'''
+            }
+        }
+    }
+}

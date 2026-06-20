@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   zomato:
-    image: jyothisai33/zomato:v1
+    image: jyothisai33/zomato
     ports:
       - "3000:3000"
     deploy:

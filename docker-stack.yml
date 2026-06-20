@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  zomato:
+    image: jyothisai33/zomato:v1
+    ports:
+      - "3000:3000"
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    networks:
+      - zomato-net
+
+networks:
+  zomato-net:
+    driver: overlay
